@@ -1969,6 +1969,19 @@ namespace Xceed.Wpf.AvalonDock
       base.OnPreviewKeyDown( e );
     }
 
+    protected override void OnPreviewGotKeyboardFocus(KeyboardFocusChangedEventArgs e)
+    {
+        // Fixes issue where MenuItem inside LayoutAnchorable causes null exception on menuSite
+        if (e.NewFocus is TabItem)
+        {
+            e.Handled = true;
+            return;
+        }
+
+        base.OnPreviewGotKeyboardFocus(e);
+    }
+
+
     #endregion
 
     #region Public Methods
