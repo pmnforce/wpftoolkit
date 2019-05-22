@@ -71,8 +71,6 @@ using System;
 [assembly: AssemblyDelaySign( false )]
 [assembly: AssemblyKeyFile( @"..\..\sn.snk" )]
 [assembly: AssemblyKeyName( "" )]
-[assembly: AssemblyVersion("1.0.0.0")]
-[assembly: AssemblyFileVersion("1.0.0.0")]
 #pragma warning restore 1699
 
 
