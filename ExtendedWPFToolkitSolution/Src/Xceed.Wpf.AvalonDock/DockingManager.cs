@@ -2090,7 +2090,14 @@ namespace Xceed.Wpf.AvalonDock
 
         Dispatcher.BeginInvoke( new Action( () =>
         {
-           newFW.Show();
+            try
+            {
+                newFW.Show();
+            }
+            catch (InvalidOperationException)
+            {
+
+            }
         } ), DispatcherPriority.Send );
 
         // Do not set the WindowState before showing or it will be lost
