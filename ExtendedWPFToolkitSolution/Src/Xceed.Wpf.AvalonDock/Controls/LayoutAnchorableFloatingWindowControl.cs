@@ -57,6 +57,7 @@ namespace Xceed.Wpf.AvalonDock.Controls
     internal LayoutAnchorableFloatingWindowControl( LayoutAnchorableFloatingWindow model )
         : this( model, false )
     {
+      _model = model;
     }
 
     #endregion
