@@ -2,10 +2,11 @@
    
    Toolkit for WPF
 
-   Copyright (C) 2007-2018 Xceed Software Inc.
+   Copyright (C) 2007-2020 Xceed Software Inc.
 
-   This program is provided to you under the terms of the Microsoft Public
-   License (Ms-PL) as published at http://wpftoolkit.codeplex.com/license 
+   This program is provided to you under the terms of the XCEED SOFTWARE, INC.
+   COMMUNITY LICENSE AGREEMENT (for non-commercial use) as published at 
+   https://github.com/xceedsoftware/wpftoolkit/blob/master/license.md 
 
    For more features, controls, and fast professional support,
    pick up the Plus Edition at https://xceed.com/xceed-toolkit-plus-for-wpf/
@@ -65,18 +66,18 @@ namespace Xceed.Wpf.AvalonDock.Controls
             {
              // childPositionableModel.DockWidth = new GridLength( 1.0, GridUnitType.Star );
             }
-            else if( childPositionableModel != null && childPositionableModel.DockWidth.IsStar )
+            else if( (childPositionableModel != null) && childPositionableModel.DockWidth.IsStar )
             {
               var childPositionableModelWidthActualSize = childPositionableModel as ILayoutPositionableElementWithActualSize;
+              if( childPositionableModelWidthActualSize.ActualWidth == 0d )
+                continue;
 
               var widthToSet = Math.Max( childPositionableModelWidthActualSize.ActualWidth, childPositionableModel.DockMinWidth );
 
               widthToSet = Math.Min( widthToSet, ActualWidth / 2.0 );
               widthToSet = Math.Max( widthToSet, childPositionableModel.DockMinWidth );
 
-              childPositionableModel.DockWidth = new GridLength(
-                  widthToSet,
-                  GridUnitType.Pixel );
+              childPositionableModel.DockWidth = new GridLength( double.IsNaN( widthToSet ) ? ActualWidth / 2.0 : widthToSet, GridUnitType.Pixel );
             }
           }
         }
@@ -107,15 +108,17 @@ namespace Xceed.Wpf.AvalonDock.Controls
             {
               //childPositionableModel.DockHeight = new GridLength( 1.0, GridUnitType.Star );
             }
-            else if( childPositionableModel != null && childPositionableModel.DockHeight.IsStar )
+            else if( (childPositionableModel != null) && childPositionableModel.DockHeight.IsStar )
             {
               var childPositionableModelWidthActualSize = childPositionableModel as ILayoutPositionableElementWithActualSize;
+              if( childPositionableModelWidthActualSize.ActualHeight == 0d )
+                continue;
 
               var heightToSet = Math.Max( childPositionableModelWidthActualSize.ActualHeight, childPositionableModel.DockMinHeight );
               heightToSet = Math.Min( heightToSet, ActualHeight / 2.0 );
               heightToSet = Math.Max( heightToSet, childPositionableModel.DockMinHeight );
 
-              childPositionableModel.DockHeight = new GridLength( heightToSet, GridUnitType.Pixel );
+              childPositionableModel.DockHeight = new GridLength( double.IsNaN( heightToSet ) ? ActualHeight / 2.0 : heightToSet, GridUnitType.Pixel );
             }
           }
         }

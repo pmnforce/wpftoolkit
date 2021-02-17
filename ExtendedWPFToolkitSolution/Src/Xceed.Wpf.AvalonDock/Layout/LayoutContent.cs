@@ -2,10 +2,11 @@
    
    Toolkit for WPF
 
-   Copyright (C) 2007-2018 Xceed Software Inc.
+   Copyright (C) 2007-2020 Xceed Software Inc.
 
-   This program is provided to you under the terms of the Microsoft Public
-   License (Ms-PL) as published at http://wpftoolkit.codeplex.com/license 
+   This program is provided to you under the terms of the XCEED SOFTWARE, INC.
+   COMMUNITY LICENSE AGREEMENT (for non-commercial use) as published at 
+   https://github.com/xceedsoftware/wpftoolkit/blob/master/license.md 
 
    For more features, controls, and fast professional support,
    pick up the Plus Edition at https://xceed.com/xceed-toolkit-plus-for-wpf/
@@ -28,7 +29,7 @@ namespace Xceed.Wpf.AvalonDock.Layout
 {
   [ContentProperty( "Content" )]
   [Serializable]
-  public abstract class LayoutContent : LayoutElement, IXmlSerializable, ILayoutElementForFloatingWindow, IComparable<LayoutContent>, ILayoutPreviousContainer
+  public abstract class LayoutContent : LayoutElement, IXmlSerializable, ILayoutElementForFloatingWindow, IComparable<LayoutContent>, ILayoutPreviousContainer, ILayoutInitialContainer
   {
     #region Constructors
 
@@ -277,13 +278,13 @@ namespace Xceed.Wpf.AvalonDock.Layout
       }
     }
 
-    protected ILayoutContainer PreviousContainer
+    public ILayoutContainer PreviousContainer
     {
       get
       {
         return ( ( ILayoutPreviousContainer )this ).PreviousContainer;
       }
-      set
+      protected set
       {
         ( ( ILayoutPreviousContainer )this ).PreviousContainer = value;
       }
@@ -296,15 +297,75 @@ namespace Xceed.Wpf.AvalonDock.Layout
       set;
     }
 
-    protected string PreviousContainerId
+    public string PreviousContainerId
     {
       get
       {
         return ( ( ILayoutPreviousContainer )this ).PreviousContainerId;
       }
-      set
+      protected set
       {
         ( ( ILayoutPreviousContainer )this ).PreviousContainerId = value;
+      }
+    }
+
+    #endregion
+
+    #region InitialContainer
+
+    [field: NonSerialized]
+    private ILayoutContainer _initialContainer = null;
+
+    [XmlIgnore]
+    ILayoutContainer ILayoutInitialContainer.InitialContainer
+    {
+      get
+      {
+        return _initialContainer;
+      }
+      set
+      {
+        if( _initialContainer != value )
+        {
+          _initialContainer = value;
+          RaisePropertyChanged( "InitialContainer" );
+
+          var paneSerializable = _initialContainer as ILayoutPaneSerializable;
+          if( paneSerializable != null &&
+              paneSerializable.Id == null )
+            paneSerializable.Id = Guid.NewGuid().ToString();
+        }
+      }
+    }
+
+    internal ILayoutContainer InitialContainer
+    {
+      get
+      {
+        return ( ( ILayoutInitialContainer )this ).InitialContainer;
+      }
+      set
+      {
+        ( ( ILayoutInitialContainer )this ).InitialContainer = value;
+      }
+    }
+
+    [XmlIgnore]
+    string ILayoutInitialContainer.InitialContainerId
+    {
+      get;
+      set;
+    }
+
+    internal string InitialContainerId
+    {
+      get
+      {
+        return ( ( ILayoutInitialContainer )this ).InitialContainerId;
+      }
+      set
+      {
+        ( ( ILayoutInitialContainer )this ).InitialContainerId = value;
       }
     }
 
@@ -326,6 +387,28 @@ namespace Xceed.Wpf.AvalonDock.Layout
         {
           _previousContainerIndex = value;
           RaisePropertyChanged( "PreviousContainerIndex" );
+        }
+      }
+    }
+
+    #endregion
+
+    #region InitialContainerIndex
+    [field: NonSerialized]
+    private int _initialContainerIndex = -1;
+    [XmlIgnore]
+    internal int InitialContainerIndex
+    {
+      get
+      {
+        return _initialContainerIndex;
+      }
+      set
+      {
+        if( _initialContainerIndex != value )
+        {
+          _initialContainerIndex = value;
+          RaisePropertyChanged( "InitialContainerIndex" );
         }
       }
     }
@@ -495,6 +578,11 @@ namespace Xceed.Wpf.AvalonDock.Layout
 
     #endregion
 
+
+
+
+
+
     #region IconSource
 
     private ImageSource _iconSource = null;
@@ -649,6 +737,10 @@ namespace Xceed.Wpf.AvalonDock.Layout
         PreviousContainerId = reader.Value;
       if( reader.MoveToAttribute( "PreviousContainerIndex" ) )
         PreviousContainerIndex = int.Parse( reader.Value );
+      if( reader.MoveToAttribute( "InitialContainerId" ) )
+        InitialContainerId = reader.Value;
+      if( reader.MoveToAttribute( "InitialContainerIndex" ) )
+        InitialContainerIndex = int.Parse( reader.Value );
 
       if( reader.MoveToAttribute( "FloatingLeft" ) )
         FloatingLeft = double.Parse( reader.Value, CultureInfo.InvariantCulture );
@@ -700,11 +792,10 @@ namespace Xceed.Wpf.AvalonDock.Layout
         writer.WriteAttributeString( "FloatingWidth", FloatingWidth.ToString( CultureInfo.InvariantCulture ) );
       if( FloatingHeight != 0.0 )
         writer.WriteAttributeString( "FloatingHeight", FloatingHeight.ToString( CultureInfo.InvariantCulture ) );
-
       if( IsMaximized )
         writer.WriteAttributeString( "IsMaximized", IsMaximized.ToString() );
-      if( !CanClose )
-        writer.WriteAttributeString( "CanClose", CanClose.ToString() );
+      // Always serialize CanClose because the default value is different for LayoutAnchorable vs LayoutDocument.
+      writer.WriteAttributeString( "CanClose", CanClose.ToString() );
       if( !CanFloat )
         writer.WriteAttributeString( "CanFloat", CanFloat.ToString() );
 
@@ -719,6 +810,15 @@ namespace Xceed.Wpf.AvalonDock.Layout
         {
           writer.WriteAttributeString( "PreviousContainerId", paneSerializable.Id );
           writer.WriteAttributeString( "PreviousContainerIndex", _previousContainerIndex.ToString() );
+        }
+      }
+      if( _initialContainer != null )
+      {
+        var paneSerializable = _initialContainer as ILayoutPaneSerializable;
+        if( paneSerializable != null )
+        {
+          writer.WriteAttributeString( "InitialContainerId", paneSerializable.Id );
+          writer.WriteAttributeString( "InitialContainerIndex", _initialContainerIndex.ToString() );
         }
       }
 
@@ -782,6 +882,14 @@ namespace Xceed.Wpf.AvalonDock.Layout
       if( Parent is LayoutDocumentPane )
         return;
 
+      if( this is LayoutAnchorable )
+      {
+        if( ( (LayoutAnchorable)this ).CanClose )
+        {
+          ( (LayoutAnchorable)this ).SetCanCloseInternal( true );
+        }
+      }
+
       if( PreviousContainer is LayoutDocumentPane )
       {
         Dock();
@@ -843,10 +951,12 @@ namespace Xceed.Wpf.AvalonDock.Layout
         InternalDock();
       }
 
-
-      Root.CollectGarbage();
-
+      if( this.Root != null )
+      {
+        Root.CollectGarbage();
+      }
     }
+
 
 
 
@@ -895,6 +1005,7 @@ namespace Xceed.Wpf.AvalonDock.Layout
         Closing( this, args );
     }
 
+
     protected virtual void InternalDock()
     {
     }
@@ -917,6 +1028,7 @@ namespace Xceed.Wpf.AvalonDock.Layout
     /// Hanlde the Hiding event for the LayoutAnchorable to cancel the hide operation.</remarks>
     public event EventHandler<CancelEventArgs> Closing;
 
-    #endregion
+
+#endregion
   }
 }
